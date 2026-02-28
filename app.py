@@ -1,38 +1,33 @@
-
 import streamlit as st
-import tensorflow as tf
 import numpy as np
+import tensorflow as tf
 from PIL import Image
-from tensorflow.keras.applications.resnet import preprocess_input
 
-st.set_page_config(page_title="Brain Tumor Detection", layout="centered")
+# Load model
+model = tf.keras.models.load_model("brain_tumor_hybrid_model.h5")
 
-@st.cache_resource
-def load_model():
-    return tf.keras.models.load_model("best_model.h5", compile=False)
+class_names = ['glioma', 'meningioma', 'notumor', 'pituitary']
 
-model = load_model()
+st.title("🧠 Brain Tumor Detection App")
+st.write("Upload an MRI image to classify tumor type.")
 
-with open("class_names.txt") as f:
-    class_names = f.read().splitlines()
+uploaded_file = st.file_uploader("Choose an MRI Image", type=["jpg", "png", "jpeg"])
 
-st.title("🧠 Brain Tumor Detection System")
-st.write("Upload a Brain MRI image to detect tumor type")
-
-uploaded_file = st.file_uploader("Upload MRI Image", type=["jpg","png","jpeg"])
-
-if uploaded_file:
+if uploaded_file is not None:
     image = Image.open(uploaded_file).convert("RGB")
-    st.image(image, caption="Uploaded MRI Image", use_column_width=True)
+    st.image(image, caption="Uploaded Image", use_column_width=True)
 
-    img = image.resize((224,224))
-    img_array = np.expand_dims(np.array(img), axis=0)
+    image = image.resize((224, 224))
+    img_array = np.array(image)
+    img_array = np.expand_dims(img_array, axis=0)
+
+    # If you used EfficientNet preprocessing:
+    from tensorflow.keras.applications.efficientnet import preprocess_input
     img_array = preprocess_input(img_array)
 
-    preds = model.predict(img_array)
-    idx = np.argmax(preds)
-    conf = np.max(preds) * 100
+    prediction = model.predict(img_array)
+    predicted_class = class_names[np.argmax(prediction)]
+    confidence = np.max(prediction) * 100
 
-    st.subheader("Prediction")
-    st.write(f"Tumor Type: **{class_names[idx].upper()}**")
-    st.write(f"Confidence: **{conf:.2f}%**")
+    st.success(f"Prediction: {predicted_class}")
+    st.info(f"Confidence: {confidence:.2f}%")
