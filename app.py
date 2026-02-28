@@ -4,7 +4,10 @@ import tensorflow as tf
 from PIL import Image
 
 # Load model
-model = tf.keras.models.load_model("brain_tumor_hybrid_model.h5")
+import os
+
+MODEL_PATH = os.path.join(os.path.dirname(__file__), "best_model.h5")
+model = tf.keras.models.load_model(MODEL_PATH)
 
 class_names = ['glioma', 'meningioma', 'notumor', 'pituitary']
 
